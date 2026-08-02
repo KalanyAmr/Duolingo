@@ -29,7 +29,7 @@ document.cookie
 
 ### 🔥 Streak Keeper
 
-A scheduled GitHub Actions workflow runs once a day at a random time between 22:00 and 23:00 UTC and completes 5 practice sessions to keep the streak alive and earn XP. If a run fails (for example because the JWT expired), the workflow turns red and GitHub notifies you by email. See [.github/workflows/streak-keeper.yml](.github/workflows/streak-keeper.yml).
+A scheduled GitHub Actions workflow runs once a day at a random time between 22:00 and 23:45 UTC and completes 5 practice sessions to keep the streak alive and earn XP. A keepalive step prevents GitHub from disabling the schedule after 60 days of repository inactivity, so it keeps running on its own indefinitely. If a run fails (for example because the JWT expired), the workflow turns red and GitHub notifies you by email. See [.github/workflows/streak-keeper.yml](.github/workflows/streak-keeper.yml).
 
 ### 📚 Study
 

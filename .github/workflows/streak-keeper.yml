@@ -14,9 +14,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Random delay (up to 1 hour)
+      - name: Random delay (up to 1 hour 45 minutes)
         if: github.event_name == 'schedule'
-        run: sleep $((RANDOM % 3600))
+        run: sleep $((RANDOM % 6300))
       - run: node index.js
         env:
           DUOLINGO_JWT: ${{ secrets.DUOLINGO_JWT }}
@@ -27,6 +27,9 @@ jobs:
       actions: write
       contents: read
     steps:
+      - uses: actions/checkout@v4
+      - name: Keep scheduled workflow enabled
+        uses: gautamkrishnar/keepalive-workflow@v2
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@v2
         with:
