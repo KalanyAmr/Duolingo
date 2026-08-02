@@ -97,13 +97,15 @@ try {
 			},
 		).then((response) => response.json());
 
+		const durationSeconds = 60 + Math.floor(Math.random() * 240);
+
 		const response = await fetch(
 			`https://www.duolingo.com/2017-06-30/sessions/${session.id}`,
 			{
 				body: JSON.stringify({
 					...session,
 					heartsLeft: 0,
-					startTime: (+new Date() - 60000) / 1000,
+					startTime: (+new Date() - durationSeconds * 1000) / 1000,
 					enableBonusPoints: false,
 					endTime: +new Date() / 1000,
 					failed: false,
@@ -120,8 +122,9 @@ try {
 
 	console.log(`🎉 You won ${xp} XP`);
 } catch (error) {
-	console.log("❌ Something went wrong");
+	console.error("❌ Something went wrong");
 	if (error instanceof Error) {
-		console.log(error.message);
+		console.error(error.message);
 	}
+	process.exit(1);
 }

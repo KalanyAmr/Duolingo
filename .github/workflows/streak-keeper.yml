@@ -3,6 +3,7 @@ name: Keep my Duolingo streak
 on:
   schedule:
     - cron: '0 9 * * *'
+    - cron: '0 21 * * *'
   workflow_dispatch:
     inputs: {}
 
@@ -14,10 +15,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Random delay (up to 30 minutes)
+        if: github.event_name == 'schedule'
+        run: sleep $((RANDOM % 1800))
       - run: node index.js
         env:
           DUOLINGO_JWT: ${{ secrets.DUOLINGO_JWT }}
-          LESSONS: 1
+          LESSONS: 5
   delete-old-runs:
     runs-on: ubuntu-latest
     permissions:
@@ -29,5 +33,5 @@ jobs:
         with:
           token: ${{ github.token }}
           repository: ${{ github.repository }}
-          keep_minimum_runs: 0
-          retain_days: 0
+          keep_minimum_runs: 10
+          retain_days: 30
