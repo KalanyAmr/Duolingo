@@ -21,19 +21,23 @@ jobs:
         env:
           DUOLINGO_JWT: ${{ secrets.DUOLINGO_JWT }}
           LESSONS: 5
-  delete-old-runs:
+  maintenance:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-      contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
       - name: Keep scheduled workflow enabled
-        uses: gautamkrishnar/keepalive-workflow@v2
-      - name: Delete workflow runs
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          keep_minimum_runs: 10
-          retain_days: 30
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/streak-keeper.yml/enable"
+      - name: Delete old workflow runs (keep 10 newest, 30 days)
+        run: |
+          cutoff=$(date -u -d '30 days ago' +%s)
+          gh api "repos/${{ github.repository }}/actions/runs?per_page=100" --paginate \
+            -q '.workflow_runs[] | select(.status == "completed") | [.id, .created_at] | @tsv' |
+          tail -n +11 |
+          while IFS=$'\t' read -r id created_at; do
+            if [ "$(date -u -d "$created_at" +%s)" -lt "$cutoff" ]; then
+              gh api -X DELETE "repos/${{ github.repository }}/actions/runs/$id" || true
+            fi
+          done
