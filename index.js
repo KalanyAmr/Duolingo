@@ -1,3 +1,22 @@
+const fetchJson = async (url, options = {}, attempts = 3) => {
+	for (let attempt = 1; attempt <= attempts; attempt++) {
+		try {
+			const response = await fetch(url, options);
+			const text = await response.text();
+			if (!response.ok) {
+				throw new Error(
+					`${response.status} ${response.statusText} from ${url}: ${text.slice(0, 200)}`,
+				);
+			}
+			return JSON.parse(text);
+		} catch (error) {
+			if (attempt === attempts) throw error;
+			console.log(`⚠️ Attempt ${attempt} failed: ${error.message} — retrying in 15s`);
+			await new Promise((resolve) => setTimeout(resolve, 15000));
+		}
+	}
+};
+
 try {
 	process.env.LESSONS = process.env.LESSONS ?? 1;
 
@@ -12,16 +31,16 @@ try {
 		Buffer.from(process.env.DUOLINGO_JWT.split(".")[1], "base64").toString(),
 	);
 
-	const { fromLanguage, learningLanguage } = await fetch(
+	const { fromLanguage, learningLanguage } = await fetchJson(
 		`https://www.duolingo.com/2017-06-30/users/${sub}?fields=fromLanguage,learningLanguage`,
 		{
 			headers,
 		},
-	).then((response) => response.json());
+	);
 
 	let xp = 0;
 	for (let i = 0; i < process.env.LESSONS; i++) {
-		const session = await fetch(
+		const session = await fetchJson(
 			"https://www.duolingo.com/2017-06-30/sessions",
 			{
 				body: JSON.stringify({
@@ -95,11 +114,11 @@ try {
 				headers,
 				method: "POST",
 			},
-		).then((response) => response.json());
+		);
 
 		const durationSeconds = 60 + Math.floor(Math.random() * 240);
 
-		const response = await fetch(
+		const response = await fetchJson(
 			`https://www.duolingo.com/2017-06-30/sessions/${session.id}`,
 			{
 				body: JSON.stringify({
@@ -115,7 +134,7 @@ try {
 				headers,
 				method: "PUT",
 			},
-		).then((response) => response.json());
+		);
 
 		xp += response.xpGain;
 	}
