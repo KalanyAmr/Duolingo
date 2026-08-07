@@ -1,4 +1,4 @@
-const fetchJson = async (url, options = {}, attempts = 3) => {
+const fetchJson = async (url, options = {}, attempts = 4) => {
 	for (let attempt = 1; attempt <= attempts; attempt++) {
 		try {
 			const response = await fetch(url, options);
@@ -11,8 +11,11 @@ const fetchJson = async (url, options = {}, attempts = 3) => {
 			return JSON.parse(text);
 		} catch (error) {
 			if (attempt === attempts) throw error;
-			console.log(`⚠️ Attempt ${attempt} failed: ${error.message} — retrying in 15s`);
-			await new Promise((resolve) => setTimeout(resolve, 15000));
+			const delaySeconds = 15 * attempt;
+			console.log(
+				`⚠️ Attempt ${attempt} failed: ${error.message} — retrying in ${delaySeconds}s`,
+			);
+			await new Promise((resolve) => setTimeout(resolve, delaySeconds * 1000));
 		}
 	}
 };

@@ -2,7 +2,7 @@ name: Keep my Duolingo streak
 
 on:
   schedule:
-    - cron: '0 22 * * *'
+    - cron: '7 22 * * *'
   workflow_dispatch:
     inputs: {}
 
@@ -14,13 +14,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Random delay (up to 1 hour 45 minutes)
+      - name: Random delay (up to 1 hour)
         if: github.event_name == 'schedule'
-        run: sleep $((RANDOM % 6300))
-      - run: node index.js
+        run: sleep $((RANDOM % 3600))
+      - name: Study (up to 3 attempts, 10 minutes apart)
         env:
           DUOLINGO_JWT: ${{ secrets.DUOLINGO_JWT }}
           LESSONS: 5
+        run: |
+          for attempt in 1 2 3; do
+            node index.js && exit 0
+            echo "::warning::Attempt $attempt failed"
+            [ "$attempt" -lt 3 ] && sleep 600
+          done
+          exit 1
   maintenance:
     runs-on: ubuntu-latest
     permissions:
