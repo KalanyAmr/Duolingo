@@ -1,8 +1,11 @@
 name: Keep my Duolingo streak
 
 on:
+  # Fires well before the target window; the first job step then sleeps
+  # until a random moment between 22:00 and 23:00 Israel time, which is
+  # UTC+3 in summer and UTC+2 in winter.
   schedule:
-    - cron: '7 22 * * *'
+    - cron: '37 18 * * *'
   workflow_dispatch:
     inputs: {}
 
@@ -14,9 +17,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Random delay (up to 1 hour)
+      - name: Wait until a random time between 22:00 and 23:00 Israel time
         if: github.event_name == 'schedule'
-        run: sleep $((RANDOM % 3600))
+        run: |
+          target=$(TZ=Asia/Jerusalem date -d "22:00" +%s)
+          sleep_for=$(( target + RANDOM % 3600 - $(date +%s) ))
+          if [ "$sleep_for" -gt 0 ]; then
+            echo "Sleeping ${sleep_for}s until $(TZ=Asia/Jerusalem date -d "@$(( $(date +%s) + sleep_for ))")"
+            sleep "$sleep_for"
+          fi
       - name: Study (up to 3 attempts, 10 minutes apart)
         env:
           DUOLINGO_JWT: ${{ secrets.DUOLINGO_JWT }}
