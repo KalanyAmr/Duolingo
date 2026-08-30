@@ -1,11 +1,11 @@
 name: Keep my Duolingo streak
 
 on:
-  # Fires well before the target window; the first job step then sleeps
-  # until a random moment between 22:00 and 23:00 Israel time, which is
-  # UTC+3 in summer and UTC+2 in winter.
+  # Fires hours before the target window (GitHub's scheduler can lag 3h+);
+  # the first job step then sleeps until a random moment between 22:00 and
+  # 23:00 Israel time, which is UTC+3 in summer and UTC+2 in winter.
   schedule:
-    - cron: '37 18 * * *'
+    - cron: '7 16 * * *'
   workflow_dispatch:
     inputs: {}
 
@@ -20,8 +20,14 @@ jobs:
       - name: Wait until a random time between 22:00 and 23:00 Israel time
         if: github.event_name == 'schedule'
         run: |
-          target=$(TZ=Asia/Jerusalem date -d "22:00" +%s)
-          sleep_for=$(( target + RANDOM % 3600 - $(date +%s) ))
+          sleep_for=$(( $(TZ=Asia/Jerusalem date -d "22:00" +%s) + RANDOM % 3600 - $(date +%s) ))
+          # A wait longer than any legitimate one means the cron fired after
+          # local midnight and "22:00" rolled to tomorrow. Sleeping would hit
+          # the 6h job kill; run now instead to protect the day that started.
+          if [ "$sleep_for" -gt 19800 ]; then
+            echo "Cron fired past local midnight; running immediately"
+            sleep_for=0
+          fi
           if [ "$sleep_for" -gt 0 ]; then
             echo "Sleeping ${sleep_for}s until $(TZ=Asia/Jerusalem date -d "@$(( $(date +%s) + sleep_for ))")"
             sleep "$sleep_for"
